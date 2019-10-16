@@ -24,11 +24,12 @@ class InsightsSpec(object):
         # exclusions patterns for this spec
         # if exclude is an array of strings, it's old style
         # if it's an object or an array of dicts, it's new style
+        # use regex if it's defined
         self.regex = False
         if exclude and isinstance(exclude, dict):
             if 'regex' in exclude and exclude['regex']:
                 self.regex = True
-            self.exclude = exclude['strings']
+                self.exclude = exclude['regex']
         else:
             self.exclude = exclude
         # pattern for spec collection
