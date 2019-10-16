@@ -9,6 +9,8 @@ import six
 import shlex
 import os
 import requests
+import yaml
+from yaml import Loader
 from six.moves import configparser as ConfigParser
 
 from subprocess import Popen, PIPE, STDOUT
@@ -208,11 +210,18 @@ class InsightsUploadConf(object):
         logger.debug('sha1 of config: %s', config_hash)
         return dyn_conf
 
-    def get_rm_conf(self):
+    def get_rm_conf_old(self):
         """
         Get excluded files config from remove_file.
         """
-        if not os.path.isfile(self.remove_file):
+        # Convert config object into dict
+        try:
+            parsedconfig = ConfigParser.RawConfigParser()
+            parsedconfig.read(self.remove_file)
+        except ConfigParser.Error:
+            # can't parse config file at all
+            # TODO: should probably exit when remove.conf is unvailable
+            logger.error('ERROR: Cannot parse remove.conf as an .ini file.')
             return None
 
         # Convert config object into dict
@@ -220,7 +229,6 @@ class InsightsUploadConf(object):
         try:
             parsedconfig.read(self.remove_file)
             rm_conf = {}
-
             for item, value in parsedconfig.items('remove'):
                 if six.PY3:
                     rm_conf[item] = value.strip().encode('utf-8').decode('unicode-escape').split(',')
@@ -229,6 +237,22 @@ class InsightsUploadConf(object):
             return rm_conf
         except ConfigParser.Error as e:
             raise RuntimeError('ERROR: Could not parse the remove.conf file. ' + str(e))
+
+    def get_rm_conf(self):
+        '''
+        Load remove conf. If it's a YAML-formatted file, try to load
+        the "new" version of remove.conf
+        '''
+        if not os.path.isfile(self.remove_file):
+            logger.debug('No remove.conf defined. No files/commands will be ignored.')
+            return None
+        try:
+            with open(self.remove_file) as f:
+                rm_conf = yaml.load(f, Loader=Loader)
+        except yaml.YAMLError:
+            # can't parse yaml from conf, try old style
+            logger.error('ERROR: Cannot parse remove.conf as a YAML file.')
+            return self.get_rm_conf_old()
 
 
 if __name__ == '__main__':
