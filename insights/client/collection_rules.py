@@ -253,6 +253,7 @@ class InsightsUploadConf(object):
             # can't parse yaml from conf, try old style
             logger.error('ERROR: Cannot parse remove.conf as a YAML file.')
             return self.get_rm_conf_old()
+        return rm_conf
 
 
 if __name__ == '__main__':
