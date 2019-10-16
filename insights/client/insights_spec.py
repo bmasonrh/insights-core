@@ -28,7 +28,7 @@ class InsightsSpec(object):
         if exclude and isinstance(exclude, dict):
             if 'regex' in exclude and exclude['regex']:
                 self.regex = True
-            self.exclude = exclude.strings
+            self.exclude = exclude['strings']
         else:
             self.exclude = exclude
         # pattern for spec collection
