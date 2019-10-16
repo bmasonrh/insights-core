@@ -20,8 +20,17 @@ class InsightsSpec(object):
     '''
     def __init__(self, config, spec, exclude, parent_pid=None):
         self.config = config
+
         # exclusions patterns for this spec
-        self.exclude = exclude
+        # if exclude is an array of strings, it's old style
+        # if it's an object or an array of dicts, it's new style
+        self.regex = False
+        if exclude and isinstance(exclude, dict):
+            if exclude.regex:
+                self.regex = True
+            self.exclude = exclude.strings
+        else:
+            self.exclude = exclude
         # pattern for spec collection
         self.pattern = spec['pattern'] if spec['pattern'] else None
         # PID of parent insights-client process, to notify systemd watchdog
@@ -92,7 +101,10 @@ class InsightsCommand(InsightsSpec):
             exclude_file = NamedTemporaryFile()
             exclude_file.write("\n".join(self.exclude).encode('utf-8'))
             exclude_file.flush()
-            cmd = "grep -F -v -f %s" % exclude_file.name
+            if self.regex:
+                cmd = "grep -E -v -f %s" % exclude_file.name
+            else:
+                cmd = "grep -F -v -f %s" % exclude_file.name
             proc1 = Popen(shlex.split(cmd),
                           stdin=proc0.stdout,
                           stdout=PIPE)
@@ -173,7 +185,10 @@ class InsightsFile(InsightsSpec):
             exclude_file.write("\n".join(self.exclude).encode('utf-8'))
             exclude_file.flush()
 
-            cmd = "grep -v -F -f %s" % exclude_file.name
+            if self.regex:
+                cmd = "grep -E -v -f %s" % exclude_file.name
+            else:
+                cmd = "grep -F -v -f %s" % exclude_file.name
             args = shlex.split(cmd)
             proc = Popen(args, stdin=sedcmd.stdout, stdout=PIPE)
             sedcmd.stdout.close()
