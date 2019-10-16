@@ -26,7 +26,7 @@ class InsightsSpec(object):
         # if it's an object or an array of dicts, it's new style
         self.regex = False
         if exclude and isinstance(exclude, dict):
-            if exclude.regex:
+            if 'regex' in exclude and exclude['regex']:
                 self.regex = True
             self.exclude = exclude.strings
         else:
