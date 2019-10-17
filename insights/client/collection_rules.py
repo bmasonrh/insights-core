@@ -10,7 +10,6 @@ import shlex
 import os
 import requests
 import yaml
-from yaml import Loader
 from six.moves import configparser as ConfigParser
 
 from subprocess import Popen, PIPE, STDOUT
@@ -216,12 +215,14 @@ class InsightsUploadConf(object):
         """
         # Convert config object into dict
         try:
+            logger.debug('Trying to parse as INI file.')
             parsedconfig = ConfigParser.RawConfigParser()
             parsedconfig.read(self.remove_file)
         except ConfigParser.Error:
             # can't parse config file at all
             # TODO: should probably exit when remove.conf is unvailable
-            logger.error('ERROR: Cannot parse remove.conf as an .ini file.')
+            logger.error('ERROR: Cannot parse remove.conf as a YAML file nor as '
+                         'an INI file. Please check the file formatting.')
             return None
 
         # Convert config object into dict
@@ -248,10 +249,14 @@ class InsightsUploadConf(object):
             return None
         try:
             with open(self.remove_file) as f:
-                rm_conf = yaml.load(f, Loader=Loader)
-        except yaml.YAMLError:
+                rm_conf = yaml.safe_load(f)
+        except (yaml.YAMLError, yaml.parser.ParserError):
             # can't parse yaml from conf, try old style
-            logger.error('ERROR: Cannot parse remove.conf as a YAML file.')
+            logger.debug('ERROR: Cannot parse remove.conf as a YAML file.')
+            return self.get_rm_conf_old()
+        if not isinstance(rm_conf, dict):
+            # loaded data should be a dict with at least one key (commands, files, patterns, keywords)
+            logger.debug('ERROR: Invalid YAML loaded.')
             return self.get_rm_conf_old()
         return rm_conf
 
