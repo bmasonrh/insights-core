@@ -28,6 +28,7 @@ class InsightsSpec(object):
         self.regex = False
         if exclude and isinstance(exclude, dict):
             if 'regex' in exclude and exclude['regex']:
+                logger.debug('Using regular expression matching in remove.conf.')
                 self.regex = True
                 self.exclude = exclude['regex']
         else:
