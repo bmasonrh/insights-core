@@ -3,16 +3,16 @@
 # Commands can be specified either by full command or
 #   by the "symbolic_name" listed in .cache.json
 commands:
-  - /bin/rpm -qa
-  - /bin/ls
-  - ethtool_i
+- /bin/rpm -qa
+- /bin/ls
+- ethtool_i
 
 # Omit entire output of files
 # Files can be specified either by full filename or
 #   by the "symbolic_name" listed in .cache.json
 files:
-  - /var/lib/oioioioioi
-  - /var/lib/juice
+- /var/lib/oioioioioi
+- /var/lib/juice
 
 # Omit lines from files and command output using parameters listed here.
 # Lines matching the parameters specified will be omitted
@@ -41,5 +41,5 @@ patterns:
 # Replace keywords in files and command output with generic identifiers
 #   string  - the string to search for
 keywords:
-  - string: asdfjasdjfiosdf
-  - string: dasdagasf
+- string: asdfjasdjfiosdf
+- string: dasdagasf
