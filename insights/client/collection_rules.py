@@ -244,6 +244,44 @@ class InsightsUploadConf(object):
         Load remove conf. If it's a YAML-formatted file, try to load
         the "new" version of remove.conf
         '''
+        def is_list_of_strings(data):
+            '''
+            Helper function for correct_format()
+            '''
+            if not isinstance(data, list):
+                return False
+            for l in data:
+                if not isinstance(l, six.string_types):
+                    return False
+            return True
+
+        def correct_format(parsed_data):
+            '''
+            Ensure the parsed file matches the needed format
+            Returns True, <message> on error
+            '''
+            # validate keys are what we expect
+            expected_keys = ['commands', 'files', 'patterns', 'keywords']
+            keys = parsed_data.keys()
+            extra_keys = set(keys).difference(set(expected_keys))
+            if extra_keys:
+                return True, 'Unknown section(s) in remove.conf: ' + ','.join(extra_keys)
+
+            # validate format (lists of strings)
+            for k in expected_keys:
+                if k in parsed_data:
+                    if k == 'patterns' and isinstance(parsed_data['patterns', dict]):
+                        if 'regex' not in parsed_data['patterns']:
+                            return True, 'Patterns section contains an object but the "regex" key was not specified.'
+                        if 'regex' in parsed_data['patterns'] and len(parsed_data['patterns']) > 1:
+                            return True, 'Unknown keys in the patterns section. Only "regex" is valid.'
+                        if not is_list_of_strings(parsed_data['patterns']['regex']):
+                            return True, 'regex section under patterns must be a list of strings'
+                        continue
+                    if not is_list_of_strings(parsed_data[k]):
+                        return True, '%s section must be a list of strings.' % k
+            return False, None
+
         if not os.path.isfile(self.remove_file):
             logger.debug('No remove.conf defined. No files/commands will be ignored.')
             return None
@@ -258,6 +296,10 @@ class InsightsUploadConf(object):
             # loaded data should be a dict with at least one key (commands, files, patterns, keywords)
             logger.debug('ERROR: Invalid YAML loaded.')
             return self.get_rm_conf_old()
+        err, msg = correct_format(rm_conf)
+        if err:
+            # YAML is correct but doesn't match the format we need
+            raise RuntimeError(msg)
         return rm_conf
 
 
