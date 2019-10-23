@@ -121,7 +121,6 @@ def test_fallback_bad_data(isfile):
     if the file cannot be parsed as YAML, and the data isn't
     INI either so it's thrown out
     '''
-    return
     filedata = 'ncommands\n /badwain/ls\n- ethtool_i'
     with patch_open() as mock_open:
         # need two since the file will be open()'d twice'
@@ -130,6 +129,37 @@ def test_fallback_bad_data(isfile):
         upload_conf = insights_upload_conf(remove_file=conf_remove_file)
         result = upload_conf.get_rm_conf()
     assert result is None
+
+
+@patch_isfile(True)
+def test_load_string_patterns(isfile):
+    '''
+    Test that the patterns section is loaded as a list of strings.
+    '''
+    filedata = '---\npatterns:\n- abcd\n- bcdef'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert 'patterns' in result
+    assert isinstance(result['patterns'], list)
+
+
+@patch_isfile(True)
+def test_load_string_regex(isfile):
+    '''
+    Test that the patterns section is loaded as a dict with
+    key 'regex' and the value is a list of strings
+    '''
+    filedata = '---\npatterns:\n  regex:\n  - abcd\n  - bcdef'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert 'patterns' in result
+    assert isinstance(result['patterns'], dict)
+    assert 'regex' in result['patterns']
+    assert isinstance(result['patterns']['regex'], list)
 
 
 @patch_raw_config_parser([("files", ",".join(removed_files))])
