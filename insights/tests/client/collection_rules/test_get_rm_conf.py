@@ -186,3 +186,116 @@ def test_raw_config_parser():
     coll = InsightsUploadConf(InsightsConfig(remove_file=conf_remove_file))
     items = coll.get_rm_conf()
     assert items['files'][0] == uploader_snip['file']
+
+
+@patch_isfile(True)
+def test_config_verification_ok_validtypes(isfile):
+    '''
+    Verify that valid config is allowed when
+    proper keys and lists of strings are specified
+    '''
+    # patterns w. list of strings
+    filedata = '---\ncommands:\n- /bin/test\n- /bin/test2\nfiles:\n- /var/lib/aaa\n- /var/lib/nnn\npatterns:\n- abcd\n- bcdef\nkeywords:\n- example\n- example2'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert result
+
+    # patterns w. regex object
+    filedata = '---\ncommands:\n- /bin/test\n- /bin/test2\nfiles:\n- /var/lib/aaa\n- /var/lib/nnn\npatterns:\n  regex:\n  - abcd\n  - bcdef\nkeywords:\n- example\n- example2'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert result
+
+
+@patch_isfile(True)
+def test_config_verification_ok_emptyvalues(isfile):
+    '''
+    Verify that valid config is allowed when
+    proper keys and empty (None) values are specified
+    '''
+    filedata = '---\ncommands:\nfiles:\npatterns:\nkeywords:\n'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert result
+
+
+@patch_isfile(True)
+def test_config_verification_bad_invalidkeys(isfile):
+    '''
+    Verify that a config with invalid keys is not allowed
+    '''
+    filedata = '---\ncommands:\nfiles:\nsomekey:\n'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'Unknown section' in str(e.value)
+
+
+@patch_isfile(True)
+def test_config_verification_bad_invalidtypes(isfile):
+    '''
+    Verify that a config with valid keys,
+    but invalid data types, is not allowed
+    '''
+    filedata = '---\ncommands: somestring\nfiles:\n- /var/lib/aaa\n- /var/lib/bbb\n'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'must be a list of strings' in str(e.value)
+
+
+@patch_isfile(True)
+def test_config_verification_bad_patterns_keysnoregex(isfile):
+    '''
+    Verify that a config with patterns, if a dict
+    with a single key, only contains the key
+    "regex"
+    '''
+    filedata = '---\npatterns:\n  wrongkey:\n  - a(bc)\n  - nextregex'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'contains an object but the "regex" key was not specified' in str(e.value)
+
+
+@patch_isfile(True)
+def test_config_verification_bad_patterns_keysnoregex(isfile):
+    '''
+    Verify that a config with patterns, if a dict
+    containing the key "regex", only contains the key "regex"
+    '''
+    filedata = '---\npatterns:\n  regex:\n  wrongkey:\n  - a(bc)\n  - nextregex'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'Only "regex" is valid' in str(e.value)
+
+
+@patch_isfile(True)
+def test_config_verification_bad_patterns_regexinvalidtype(isfile):
+    '''
+    Verify that if a regex key exists in the
+    patterns section, that the value is a list
+    of strings
+    '''
+    filedata = '---\npatterns:\n  regex: a(b)'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'regex section under patterns must be a list of strings' in str(e.value)

@@ -248,6 +248,9 @@ class InsightsUploadConf(object):
             '''
             Helper function for correct_format()
             '''
+            if data is None:
+                # nonetype, no data to parse. treat as empty list
+                return True
             if not isinstance(data, list):
                 return False
             for l in data:
@@ -263,20 +266,20 @@ class InsightsUploadConf(object):
             # validate keys are what we expect
             expected_keys = ['commands', 'files', 'patterns', 'keywords']
             keys = parsed_data.keys()
-            extra_keys = set(keys).difference(set(expected_keys))
-            if extra_keys:
-                return True, 'Unknown section(s) in remove.conf: ' + ','.join(extra_keys)
+            invalid_keys = set(keys).difference(set(expected_keys))
+            if invalid_keys:
+                return True, 'Unknown section(s) in remove.conf: ' + ','.join(invalid_keys) + '.'
 
             # validate format (lists of strings)
             for k in expected_keys:
                 if k in parsed_data:
-                    if k == 'patterns' and isinstance(parsed_data['patterns', dict]):
+                    if k == 'patterns' and isinstance(parsed_data['patterns'], dict):
                         if 'regex' not in parsed_data['patterns']:
                             return True, 'Patterns section contains an object but the "regex" key was not specified.'
                         if 'regex' in parsed_data['patterns'] and len(parsed_data['patterns']) > 1:
                             return True, 'Unknown keys in the patterns section. Only "regex" is valid.'
                         if not is_list_of_strings(parsed_data['patterns']['regex']):
-                            return True, 'regex section under patterns must be a list of strings'
+                            return True, 'regex section under patterns must be a list of strings.'
                         continue
                     if not is_list_of_strings(parsed_data[k]):
                         return True, '%s section must be a list of strings.' % k
@@ -299,7 +302,7 @@ class InsightsUploadConf(object):
         err, msg = correct_format(rm_conf)
         if err:
             # YAML is correct but doesn't match the format we need
-            raise RuntimeError(msg)
+            raise RuntimeError('ERROR: ' + msg)
         return rm_conf
 
 
