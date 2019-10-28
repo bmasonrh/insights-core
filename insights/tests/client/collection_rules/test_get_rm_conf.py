@@ -217,7 +217,7 @@ def test_config_verification_ok_emptyvalues(isfile):
     Verify that valid config is allowed when
     proper keys and empty (None) values are specified
     '''
-    filedata = '---\ncommands:\nfiles:\npatterns:\nkeywords:\n'
+    filedata = '---\ncommands:\n- some_symbolic_name\nfiles:\npatterns:\nkeywords:\n'
     with patch_open() as mock_open:
         mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
         upload_conf = insights_upload_conf(remove_file=conf_remove_file)
@@ -299,3 +299,17 @@ def test_config_verification_bad_patterns_regexinvalidtype(isfile):
         with pytest.raises(RuntimeError) as e:
             result = upload_conf.get_rm_conf()
     assert 'regex section under patterns must be a list of strings' in str(e.value)
+
+
+@patch_isfile(True)
+def test_config_filtering(isfile):
+    '''
+    Verify that keys with None values
+    do not appear in the final conf
+    '''
+    filedata = '---\npatterns:\nfiles:\n- /var/lib/aaa'
+    with patch_open() as mock_open:
+        mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value]
+        upload_conf = insights_upload_conf(remove_file=conf_remove_file)
+        result = upload_conf.get_rm_conf()
+    assert 'patterns' not in result and 'files' in result

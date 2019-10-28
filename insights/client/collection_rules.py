@@ -303,7 +303,10 @@ class InsightsUploadConf(object):
         if err:
             # YAML is correct but doesn't match the format we need
             raise RuntimeError('ERROR: ' + msg)
-        return rm_conf
+        # remove Nones, empty strings, and empty lists
+        # remove patterns if regex specified and regex is empty
+        filtered_rm_conf = {k: v for k, v in rm_conf.items() if v}
+        return filtered_rm_conf
 
 
 if __name__ == '__main__':

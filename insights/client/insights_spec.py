@@ -26,6 +26,7 @@ class InsightsSpec(object):
         # if it's an object or an array of dicts, it's new style
         # use regex if it's defined
         self.regex = False
+        self.exclude = None
         if exclude and isinstance(exclude, dict):
             if 'regex' in exclude and exclude['regex']:
                 logger.debug('Using regular expression matching in remove.conf.')
