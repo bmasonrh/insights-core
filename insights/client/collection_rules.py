@@ -21,6 +21,8 @@ APP_NAME = constants.app_name
 logger = logging.getLogger(__name__)
 net_logger = logging.getLogger('network')
 
+expected_keys = ('commands', 'files', 'patterns', 'keywords')
+
 
 class InsightsUploadConf(object):
     """
@@ -219,12 +221,11 @@ class InsightsUploadConf(object):
             logger.debug('Trying to parse as INI file.')
             parsedconfig = ConfigParser.RawConfigParser()
             parsedconfig.read(self.remove_file)
-        except ConfigParser.Error:
+        except ConfigParser.Error as e:
             # can't parse config file at all
-            # TODO: should probably exit when remove.conf is unvailable
-            logger.error('ERROR: Cannot parse remove.conf as a YAML file nor as '
-                         'an INI file. Please check the file formatting.')
-            return None
+            raise RuntimeError('ERROR: Cannot parse the remove.conf file as a YAML file '
+                               'nor as an INI file. Please check the file formatting.\n'
+                               'See %s for more information' % self.config.logging_file)
 
         # Convert config object into dict
         parsedconfig = ConfigParser.RawConfigParser()
@@ -232,13 +233,16 @@ class InsightsUploadConf(object):
             parsedconfig.read(self.remove_file)
             rm_conf = {}
             for item, value in parsedconfig.items('remove'):
+                if item not in expected_keys:
+                    raise RuntimeError('Unknown section in remove.conf: ' + item +
+                                       '\nValid sections are ' + ', '.join(expected_keys) + '.')
                 if six.PY3:
                     rm_conf[item] = value.strip().encode('utf-8').decode('unicode-escape').split(',')
                 else:
                     rm_conf[item] = value.strip().decode('string-escape').split(',')
             return rm_conf
         except ConfigParser.Error as e:
-            raise RuntimeError('ERROR: Could not parse the remove.conf file. ' + str(e))
+            raise RuntimeError('ERROR: Cannot parse the remove.conf file as an INI file. ' + str(e))
 
     def get_rm_conf(self):
         '''
@@ -265,11 +269,11 @@ class InsightsUploadConf(object):
             Returns True, <message> on error
             '''
             # validate keys are what we expect
-            expected_keys = ['commands', 'files', 'patterns', 'keywords']
             keys = parsed_data.keys()
-            invalid_keys = set(keys).difference(set(expected_keys))
+            invalid_keys = set(keys).difference(expected_keys)
             if invalid_keys:
-                return True, 'Unknown section(s) in remove.conf: ' + ','.join(invalid_keys) + '.'
+                return True, ('Unknown section(s) in remove.conf: ' + ', '.join(invalid_keys) +
+                              '\nValid sections are ' + ', '.join(expected_keys) + '.')
 
             # validate format (lists of strings)
             for k in expected_keys:
@@ -292,9 +296,14 @@ class InsightsUploadConf(object):
         try:
             with open(self.remove_file) as f:
                 rm_conf = yaml.safe_load(f)
-        except (yaml.YAMLError, yaml.parser.ParserError):
+            if rm_conf is None:
+                logger.warn('WARNING: Remove file %s is empty.', self.remove_file)
+                return {}
+        except (yaml.YAMLError, yaml.parser.ParserError) as e:
             # can't parse yaml from conf, try old style
-            logger.debug('ERROR: Cannot parse remove.conf as a YAML file.')
+            logger.debug('ERROR: Cannot parse remove.conf as a YAML file.\n'
+                         'If using any YAML tokens such as [] in an expression, '
+                         'be sure to wrap the expression in quotation marks.\n\nError details:\n%s\n',e)
             return self.get_rm_conf_old()
         if not isinstance(rm_conf, dict):
             # loaded data should be a dict with at least one key (commands, files, patterns, keywords)
@@ -313,7 +322,7 @@ class InsightsUploadConf(object):
         Validate remove.conf
         '''
         if not os.path.isfile(self.remove_file):
-            logger.warn("WARN: Remove file does not exist")
+            logger.warn("WARNING: Remove file does not exist")
             return False
         # Make sure permissions are 600
         mode = stat.S_IMODE(os.stat(self.remove_file).st_mode)
@@ -328,7 +337,7 @@ class InsightsUploadConf(object):
             logger.error('Could not parse remove.conf')
             return False
         # Using print here as this could contain sensitive information
-        print('Remove.conf parsed contents:')
+        print('Remove file parsed contents:')
         print(success)
         logger.info('Parsed successfully.')
         return True
