@@ -10,6 +10,7 @@ import shlex
 import os
 import requests
 import yaml
+import stat
 from six.moves import configparser as ConfigParser
 
 from subprocess import Popen, PIPE, STDOUT
@@ -306,6 +307,31 @@ class InsightsUploadConf(object):
         # remove Nones, empty strings, and empty lists
         filtered_rm_conf = dict((k, v) for k, v in rm_conf.items() if v)
         return filtered_rm_conf
+
+    def validate(self):
+        '''
+        Validate remove.conf
+        '''
+        if not os.path.isfile(self.remove_file):
+            logger.warn("WARN: Remove file does not exist")
+            return False
+        # Make sure permissions are 600
+        mode = stat.S_IMODE(os.stat(self.remove_file).st_mode)
+        if not mode == 0o600:
+            logger.error("ERROR: Invalid remove file permissions. "
+                         "Expected 0600 got %s" % oct(mode))
+            return False
+        else:
+            logger.debug("Correct file permissions")
+        success = self.get_rm_conf()
+        if success is None or success is False:
+            logger.error('Could not parse remove.conf')
+            return False
+        # Using print here as this could contain sensitive information
+        print('Remove.conf parsed contents:')
+        print(success)
+        logger.info('Parsed successfully.')
+        return True
 
 
 if __name__ == '__main__':
