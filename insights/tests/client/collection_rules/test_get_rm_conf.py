@@ -127,8 +127,9 @@ def test_fallback_bad_data(isfile):
         mock_open.side_effect = [mock.mock_open(read_data=filedata).return_value,
                                  mock.mock_open(read_data=filedata).return_value]
         upload_conf = insights_upload_conf(remove_file=conf_remove_file)
-        result = upload_conf.get_rm_conf()
-    assert result is None
+        with pytest.raises(RuntimeError) as e:
+            result = upload_conf.get_rm_conf()
+    assert 'YAML file nor as an INI file' in str(e.value)
 
 
 @patch_isfile(True)

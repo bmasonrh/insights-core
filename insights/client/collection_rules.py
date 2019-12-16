@@ -217,18 +217,9 @@ class InsightsUploadConf(object):
         Get excluded files config from remove_file.
         """
         # Convert config object into dict
-        try:
-            logger.debug('Trying to parse as INI file.')
-            parsedconfig = ConfigParser.RawConfigParser()
-            parsedconfig.read(self.remove_file)
-        except ConfigParser.Error as e:
-            # can't parse config file at all
-            raise RuntimeError('ERROR: Cannot parse the remove.conf file as a YAML file '
-                               'nor as an INI file. Please check the file formatting.\n'
-                               'See %s for more information' % self.config.logging_file)
-
-        # Convert config object into dict
+        logger.debug('Trying to parse as INI file.')
         parsedconfig = ConfigParser.RawConfigParser()
+
         try:
             parsedconfig.read(self.remove_file)
             rm_conf = {}
@@ -242,7 +233,10 @@ class InsightsUploadConf(object):
                     rm_conf[item] = value.strip().decode('string-escape').split(',')
             return rm_conf
         except ConfigParser.Error as e:
-            raise RuntimeError('ERROR: Cannot parse the remove.conf file as an INI file. ' + str(e))
+            # can't parse config file at all
+            raise RuntimeError('ERROR: Cannot parse the remove.conf file as a YAML file '
+                               'nor as an INI file. Please check the file formatting.\n'
+                               'See %s for more information.' % self.config.logging_file)
 
     def get_rm_conf(self):
         '''
