@@ -26,6 +26,7 @@ from insights.core.spec_factory import first_of, foreach_collect, foreach_execut
 from insights.core.spec_factory import first_file, listdir
 from insights.parsers.mount import Mount, ProcMounts
 from insights.parsers.dnf_module import DnfModuleList
+from insights.parsers.uname import Uname
 from insights.combiners.cloud_provider import CloudProvider
 from insights.combiners.satellite_version import SatelliteVersion
 from insights.components.rhel_version import IsRhel8
@@ -455,7 +456,7 @@ class DefaultSpecs(Specs):
     ip_addr = simple_command("/sbin/ip addr")
     ip_addresses = simple_command("/bin/hostname -I")
     ip_route_show_table_all = simple_command("/sbin/ip route show table all")
-    ip_s_link = simple_command("/sbin/ip -s link")
+    ip_s_link = simple_command("/sbin/ip -s -d link")
     ipaupgrade_log = simple_file("/var/log/ipaupgrade.log")
     ipcs_m = simple_command("/usr/bin/ipcs -m")
     ipcs_m_p = simple_command("/usr/bin/ipcs -m -p")
@@ -494,6 +495,13 @@ class DefaultSpecs(Specs):
     keystone_crontab = simple_command("/usr/bin/crontab -l -u keystone")
     keystone_crontab_container = simple_command("docker exec keystone_cron /usr/bin/crontab -l -u keystone")
     keystone_log = first_file(["/var/log/containers/keystone/keystone.log", "/var/log/keystone/keystone.log"])
+
+    @datasource(Uname, context=HostContext)
+    def kpatch_patches_running_kernel_dir(broker):
+        un = broker[Uname]
+        return r"/var/lib/kpatch/" + un.kernel
+
+    kpatch_patch_files = command_with_args("ls %s", kpatch_patches_running_kernel_dir)
     krb5 = glob_file([r"etc/krb5.conf", r"etc/krb5.conf.d/*"])
     ksmstate = simple_file("/sys/kernel/mm/ksm/run")
     kubepods_cpu_quota = glob_file("/sys/fs/cgroup/cpu/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod[a-f0-9_]*.slice/cpu.cfs_quota_us")
@@ -749,6 +757,7 @@ class DefaultSpecs(Specs):
                               ])
     puppetserver_config = simple_file("/etc/sysconfig/puppetserver")
     prev_uploader_log = simple_file("var/log/redhat-access-insights/redhat-access-insights.log.1")
+    proc_netstat = simple_file("proc/net/netstat")
     proc_snmp_ipv4 = simple_file("proc/net/snmp")
     proc_snmp_ipv6 = simple_file("proc/net/snmp6")
     proc_stat = simple_file("proc/stat")
@@ -772,6 +781,7 @@ class DefaultSpecs(Specs):
     rabbitmq_users = simple_command("/usr/sbin/rabbitmqctl list_users")
     rc_local = simple_file("/etc/rc.d/rc.local")
     rdma_conf = simple_file("/etc/rdma/rdma.conf")
+    readlink_e_etc_mtab = simple_command("readlink -e /etc/mtab")
     redhat_release = simple_file("/etc/redhat-release")
     resolv_conf = simple_file("/etc/resolv.conf")
     rhosp_release = simple_file("/etc/rhosp-release")
@@ -935,6 +945,7 @@ class DefaultSpecs(Specs):
     systemctl_pulp_celerybeat = simple_command("/bin/systemctl show pulp_celerybeat")
     systemctl_qpidd = simple_command("/bin/systemctl show qpidd")
     systemctl_qdrouterd = simple_command("/bin/systemctl show qdrouterd")
+    systemctl_show_all_services = simple_command("/bin/systemctl show *.service")
     systemctl_smartpdc = simple_command("/bin/systemctl show smart_proxy_dynflow_core")
     systemd_docker = simple_command("/usr/bin/systemctl cat docker.service")
     systemd_logind_conf = simple_file("/etc/systemd/logind.conf")
@@ -975,7 +986,6 @@ class DefaultSpecs(Specs):
     tuned_adm = simple_command("/usr/sbin/tuned-adm list")
     tuned_conf = simple_file("/etc/tuned.conf")
     udev_persistent_net_rules = simple_file("/etc/udev/rules.d/70-persistent-net.rules")
-    ulimit_hard = simple_command("/usr/bin/ulimit -a -H")
     uname = simple_command("/usr/bin/uname -a")
     up2date = simple_file("/etc/sysconfig/rhn/up2date")
     up2date_log = simple_file("/var/log/up2date")
@@ -988,6 +998,7 @@ class DefaultSpecs(Specs):
     vdsm_id = simple_file("etc/vdsm/vdsm.id")
     vdsm_log = simple_file("var/log/vdsm/vdsm.log")
     vdsm_logger_conf = simple_file("etc/vdsm/logger.conf")
+    vma_ra_enabled = simple_file("/sys/kernel/mm/swap/vma_ra_enabled")
     vmware_tools_conf = simple_file("etc/vmware-tools/tools.conf")
     vgs = None  # simple_command('/sbin/vgs -v -o +vg_mda_count,vg_mda_free,vg_mda_size,vg_mda_used_count,vg_tags --config="global{locking_type=0}"')
     vgs_noheadings = simple_command("/sbin/vgs --nameprefixes --noheadings --separator='|' -a -o vg_all --config=\"global{locking_type=0}\"")

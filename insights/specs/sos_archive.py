@@ -51,6 +51,7 @@ class SosSpecs(Specs):
     foreman_proxy_log = first_of([simple_file("/var/log/foreman-proxy/proxy.log"), simple_file("sos_commands/foreman/foreman-debug/var/log/foreman-proxy/proxy.log")])
     foreman_satellite_log = first_of([simple_file("/var/log/foreman-installer/satellite.log"), simple_file("sos_commands/foreman/foreman-debug/var/log/foreman-installer/satellite.log")])
     foreman_ssl_access_ssl_log = first_file(["var/log/httpd/foreman-ssl_access_ssl.log", r"sos_commands/foreman/foreman-debug/var/log/httpd/foreman-ssl_access_ssl.log"])
+    hammer_ping = first_file(["sos_commands/foreman/hammer_ping", "sos_commands/foreman/foreman-debug/hammer-ping"])
     getcert_list = first_file(["sos_commands/ipa/ipa-getcert_list", "sos_commands/ipa/getcert_list"])
     gluster_v_info = simple_file("sos_commands/gluster/gluster_volume_info")
     gluster_v_status = simple_file("sos_commands/gluster/gluster_volume_status")
@@ -89,6 +90,7 @@ class SosSpecs(Specs):
     nmcli_dev_show = simple_file("sos_commands/networking/nmcli_device_show")
     nmcli_dev_show_sos = glob_file(["sos_commands/networking/nmcli_dev_show_*", "sos_commands/networkmanager/nmcli_dev_show_*"])
     ntptime = simple_file("sos_commands/ntp/ntptime")
+    openvswitch_other_config = simple_file("sos_commands/openvswitch/ovs-vsctl_-t_5_get_Open_vSwitch_._other_config")
     ovs_vsctl_show = simple_file("sos_commands/openvswitch/ovs-vsctl_-t_5_show")
     pcs_config = simple_file("sos_commands/pacemaker/pcs_config")
     pcs_quorum_status = simple_file("sos_commands/pacemaker/pcs_quorum_status")
@@ -100,19 +102,30 @@ class SosSpecs(Specs):
     ps_aux = first_file(["sos_commands/process/ps_aux", "sos_commands/process/ps_auxwww", "sos_commands/process/ps_auxcww"])
     ps_auxcww = first_file(["sos_commands/process/ps_auxcww", "sos_commands/process/ps_auxwww", "sos_commands/process/ps_aux"])
     ps_auxww = first_file(["sos_commands/process/ps_auxww", "sos_commands/process/ps_auxwww", "sos_commands/process/ps_aux", "sos_commands/process/ps_auxcww"])
-    puppet_ssl_cert_ca_pem = simple_file("sos_commands/foreman/foreman-debug/var/lib/puppet/ssl/certs/ca.pem")
-    pvs = first_file(["sos_commands/lvm2/pvs_-a_-v_-o_pv_mda_free_pv_mda_size_pv_mda_count_pv_mda_used_count_pe_start_--config_global_locking_type_0", "sos_commands/lvm2/pvs_-a_-v", "sos_commands/devicemapper/pvs_-a_-v"])
-    qpid_stat_q = first_of([
-        simple_file("qpid_stat_queues"),
-        simple_file("qpid-stat-q"),
-        simple_file("sos_commands/foreman/foreman-debug/qpid_stat_queues"),
-        simple_file("sos_commands/foreman/foreman-debug/qpid-stat-q")
+    puppet_ssl_cert_ca_pem = first_file([
+        "/etc/puppetlabs/puppet/ssl/certs/ca.pem",
+        "sos_commands/foreman/foreman-debug/var/lib/puppet/ssl/certs/ca.pem"
     ])
-    qpid_stat_u = first_of([
-        simple_file("qpid_stat_subscriptions"),
-        simple_file("qpid-stat-u"),
-        simple_file("sos_commands/foreman/foreman-debug/qpid_stat_subscriptions"),
-        simple_file("sos_commands/foreman/foreman-debug/qpid-stat-u")
+    pvs = first_file(["sos_commands/lvm2/pvs_-a_-v_-o_pv_mda_free_pv_mda_size_pv_mda_count_pv_mda_used_count_pe_start_--config_global_locking_type_0", "sos_commands/lvm2/pvs_-a_-v", "sos_commands/devicemapper/pvs_-a_-v"])
+    qpid_stat_q = first_file([
+        "sos_commands/pulp/qpid-stat_-q_--ssl-certificate_.etc.pki.pulp.qpid.client.crt_-b_amqps_..localhost_5671",
+        "sos_commands/pulp/qpid-stat_-q_--ssl-certificate_.etc.pki.katello.qpid_client_striped.crt_-b_amqps_..localhost_5671",
+        "sos_commands/katello/qpid-stat_-q_--ssl-certificate_.etc.pki.pulp.qpid.client.crt_-b_amqps_..localhost_5671",
+        "sos_commands/katello/qpid-stat_-q_--ssl-certificate_.etc.pki.katello.qpid_client_striped.crt_-b_amqps_..localhost_5671",
+        "sos_commands/foreman/foreman-debug/qpid-stat-q",
+        "qpid-stat-q",
+        "sos_commands/foreman/foreman-debug/qpid_stat_queues",
+        "qpid_stat_queues"
+    ])
+    qpid_stat_u = first_file([
+        "sos_commands/pulp/qpid-stat_-u_--ssl-certificate_.etc.pki.pulp.qpid.client.crt_-b_amqps_..localhost_5671",
+        "sos_commands/pulp/qpid-stat_-u_--ssl-certificate_.etc.pki.katello.qpid_client_striped.crt_-b_amqps_..localhost_5671",
+        "sos_commands/katello/qpid-stat_-u_--ssl-certificate_.etc.pki.pulp.qpid.client.crt_-b_amqps_..localhost_5671",
+        "sos_commands/katello/qpid-stat_-u_--ssl-certificate_.etc.pki.katello.qpid_client_striped.crt_-b_amqps_..localhost_5671",
+        "sos_commands/foreman/foreman-debug/qpid-stat-u",
+        "qpid-stat-u",
+        "sos_commands/foreman/foreman-debug/qpid_stat_subscriptions",
+        "qpid_stat_subscriptions"
     ])
     rabbitmq_report = simple_file("sos_commands/rabbitmq/rabbitmqctl_report")
     rabbitmq_report_of_containers = glob_file("sos_commands/rabbitmq/docker_exec_-t_rabbitmq-bundle-docker-*_rabbitmqctl_report")
@@ -134,6 +147,7 @@ class SosSpecs(Specs):
     sysctl = simple_file("sos_commands/kernel/sysctl_-a")
     systemctl_list_unit_files = simple_file("sos_commands/systemd/systemctl_list-unit-files")
     systemctl_list_units = first_file(["sos_commands/systemd/systemctl_list-units", "sos_commands/systemd/systemctl_list-units_--all"])
+    systemctl_show_all_services = simple_file("sos_commands/systemd/systemctl_show_service_--all")
     teamdctl_config_dump = glob_file("sos_commands/teamd/teamdctl_*_config_dump")
     teamdctl_state_dump = glob_file("sos_commands/teamd/teamdctl_*_state_dump")
     uname = simple_file("sos_commands/kernel/uname_-a")
