@@ -234,6 +234,7 @@ class InsightsUploadConf(object):
             return rm_conf
         except ConfigParser.Error as e:
             # can't parse config file at all
+            logger.debug(e)
             raise RuntimeError('ERROR: Cannot parse the remove.conf file as a YAML file '
                                'nor as an INI file. Please check the file formatting.\n'
                                'See %s for more information.' % self.config.logging_file)
@@ -297,7 +298,7 @@ class InsightsUploadConf(object):
             # can't parse yaml from conf, try old style
             logger.debug('ERROR: Cannot parse remove.conf as a YAML file.\n'
                          'If using any YAML tokens such as [] in an expression, '
-                         'be sure to wrap the expression in quotation marks.\n\nError details:\n%s\n',e)
+                         'be sure to wrap the expression in quotation marks.\n\nError details:\n%s\n', e)
             return self.get_rm_conf_old()
         if not isinstance(rm_conf, dict):
             # loaded data should be a dict with at least one key (commands, files, patterns, keywords)

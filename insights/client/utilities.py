@@ -11,7 +11,6 @@ import shlex
 import re
 import sys
 from subprocess import Popen, PIPE, STDOUT
-from six.moves.configparser import RawConfigParser
 
 import yaml
 try:
