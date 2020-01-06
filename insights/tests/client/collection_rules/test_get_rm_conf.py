@@ -95,6 +95,7 @@ def test_fallback_to_old(isfile, get_rm_conf_old):
     get_rm_conf_old.assert_called_once()
 
 
+@pytest.mark.skipif(mock.version_info < (3, 0, 5), reason="Old mock_open has no iteration control")
 @patch_isfile(True)
 def test_fallback_ini_data(isfile):
     '''
@@ -104,13 +105,12 @@ def test_fallback_ini_data(isfile):
     '''
     filedata = '[remove]\ncommands=/bin/ls,ethtool_i'
     with patch_open(filedata) as mock_open:
-        # workaround for QE jenkins having old version of mock?
-        mock_open.return_value.__iter__.return_value = filedata.splitlines()
         upload_conf = insights_upload_conf(remove_file=conf_remove_file)
         result = upload_conf.get_rm_conf()
     assert result == {'commands': ['/bin/ls', 'ethtool_i']}
 
 
+@pytest.mark.skipif(mock.version_info < (3, 0, 5), reason="Old mock_open has no iteration control")
 @patch_isfile(True)
 def test_fallback_bad_data(isfile):
     '''
@@ -120,8 +120,6 @@ def test_fallback_bad_data(isfile):
     '''
     filedata = 'ncommands\n /badwain/ls\n- ethtool_i'
     with patch_open(filedata) as mock_open:
-        # workaround for QE jenkins having old version of mock?
-        mock_open.return_value.__iter__.return_value = filedata.splitlines()
         upload_conf = insights_upload_conf(remove_file=conf_remove_file)
         with pytest.raises(RuntimeError) as e:
             result = upload_conf.get_rm_conf()
