@@ -257,7 +257,7 @@ def test_config_verification_bad_patterns_keysnoregex(isfile):
 
 
 @patch_isfile(True)
-def test_config_verification_bad_patterns_keysnoregex(isfile):
+def test_config_verification_bad_patterns_invalidkey(isfile):
     '''
     Verify that a config with patterns, if a dict
     containing the key "regex", only contains the key "regex"
